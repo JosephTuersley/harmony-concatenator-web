@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# Test data
+test/
+# Environment
+.env
+*.egg-info/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+build/
+dist/
+
+# Temp files
+*.log
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+backend/processor_before_refactor.py
+*.bak
