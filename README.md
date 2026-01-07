@@ -31,6 +31,10 @@ A web interface for concatenating Harmony high-content imaging data. Upload your
 
 ### Quick Start
 
+**Option A: Use online** (no download needed)
+- Go to [harmony-concatenator.html](https://josephtuersley.github.io/harmony-data-concatenator-react/standalone/harmony-concatenator.html)
+
+**Option B: Download for offline use**
 1. Download `standalone/harmony-concatenator.html`
 2. Double-click to open in any modern browser
 3. Upload your config.yml and ZIP file
