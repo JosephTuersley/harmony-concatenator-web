@@ -16,7 +16,41 @@ A web interface for concatenating Harmony high-content imaging data. Upload your
 - **No installation required for users** - Just open in browser
 - **Supports all plate formats** - 96, 384, and 1536-well plates
 
-## Quick Start
+## Choose Your Version
+
+| Version | Best For | Requirements |
+|---------|----------|--------------|
+| **[Standalone](#standalone-version)** | Quick use, sharing with colleagues | Just a web browser |
+| **[Full Web App](#full-web-app)** | Heavy use, very large datasets | Python + Node.js |
+
+---
+
+## Standalone Version
+
+**Zero installation required.** A single HTML file that runs entirely in your browser.
+
+### Quick Start
+
+1. Download `standalone/harmony-concatenator.html`
+2. Double-click to open in any modern browser
+3. Upload your config.yml and ZIP file
+4. Download concatenated results
+
+### Limitations
+
+- File size limit: ~1-2GB (browser memory dependent)
+- Slightly slower than server version for very large datasets
+- Works offline once loaded
+
+### Sharing
+
+Just email or share the single HTML file - recipients can use it immediately with no setup.
+
+---
+
+## Full Web App
+
+For heavy use or very large datasets (>1GB), run the full client-server version.
 
 ### Prerequisites
 
@@ -58,6 +92,8 @@ Frontend runs on http://localhost:3000
 ### 4. Open in browser
 
 Navigate to http://localhost:3000
+
+---
 
 ## Usage
 
@@ -176,21 +212,23 @@ Data is sorted by `Plate_number`, `Replicate`, then `Well_ID`.
 
 ```
 harmony-data-concatenator-web/
+├── standalone/
+│   └── harmony-concatenator.html  # Zero-install browser version
 ├── backend/
-│   ├── main.py              # FastAPI server
-│   ├── processor.py         # Core processing logic
-│   └── requirements.txt     # Python dependencies
+│   ├── main.py                    # FastAPI server
+│   ├── processor.py               # Core processing logic
+│   └── requirements.txt           # Python dependencies
 ├── frontend/
 │   ├── src/
-│   │   ├── App.js           # Main React component
-│   │   ├── index.js         # Entry point
-│   │   └── index.css        # Styles
+│   │   ├── App.js                 # Main React component
+│   │   ├── index.js               # Entry point
+│   │   └── index.css              # Styles
 │   ├── public/
-│   └── package.json         # Node dependencies
+│   └── package.json               # Node dependencies
 └── README.md
 ```
 
-## API Endpoints
+## API Endpoints (Full Web App)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -211,13 +249,23 @@ Make sure you're running both backend (port 8000) and frontend (port 3000). The 
 
 ### Processing takes a long time
 
-Large datasets (millions of rows) take time. Check the backend terminal for progress logs.
+Large datasets (millions of rows) take time. Check the backend terminal for progress logs. For the standalone version, check browser console (F12) for progress.
 
 ### "No Evaluation folders found"
 
 Your folder structure may be wrong. Each plate folder must contain an `Evaluation1/` (or similar) subfolder.
 
+### Browser runs out of memory (Standalone)
+
+For very large datasets (>1GB), use the full web app version instead.
+
 ## Tech Stack
+
+**Standalone:**
+- Pure HTML/CSS/JavaScript
+- JSZip (ZIP handling)
+- js-yaml (YAML parsing)
+- Lucide icons
 
 **Backend:**
 - FastAPI

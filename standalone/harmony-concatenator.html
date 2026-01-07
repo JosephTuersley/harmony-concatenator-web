@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harmony Concatenator - Standalone</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(to bottom right, #f8fafc, #f1f5f9);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .header-content {
+            max-width: 896px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header-icon {
+            padding: 8px;
+            background: #e0e7ff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e293b;
+            margin: 0;
+        }
+        
+        .header-subtitle {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0;
+        }
+        
+        .badge {
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            margin-left: 8px;
+        }
+        
+        main {
+            max-width: 896px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+            margin-top: 0;
+        }
+        
+        .upload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        
+        .upload-zone {
+            position: relative;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.2s;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .upload-zone:hover {
+            border-color: #94a3b8;
+            background: #f8fafc;
+        }
+        
+        .upload-zone.dragging {
+            border-color: #6366f1;
+            background: #eef2ff;
+        }
+        
+        .upload-zone.has-file {
+            border-color: #4ade80;
+            background: #f0fdf4;
+        }
+        
+        .upload-zone input {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .upload-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            pointer-events: none;
+        }
+        
+        .upload-icon {
+            color: #6366f1;
+        }
+        
+        .upload-icon.success {
+            color: #22c55e;
+        }
+        
+        .upload-label {
+            font-weight: 500;
+            color: #334155;
+            margin: 0;
+        }
+        
+        .upload-desc {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            color: #166534;
+            margin: 0;
+        }
+        
+        .file-size {
+            font-size: 14px;
+            color: #16a34a;
+            margin: 0;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .btn-primary {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            background: #4f46e5;
+            color: white;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+            transition: all 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background: #4338ca;
+        }
+        
+        .btn-primary:disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            background: transparent;
+            color: #475569;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background: #f1f5f9;
+        }
+        
+        .error-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .error-box i {
+            color: #ef4444;
+            flex-shrink: 0;
+        }
+        
+        .error-title {
+            font-weight: 600;
+            color: #991b1b;
+            margin: 0;
+        }
+        
+        .error-text {
+            color: #b91c1c;
+            margin-top: 4px;
+            margin-bottom: 0;
+        }
+        
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .btn-download {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #16a34a;
+            color: white;
+            border-radius: 8px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+            transition: all 0.2s;
+        }
+        
+        .btn-download:hover {
+            background: #15803d;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        @media (max-width: 500px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .stat-card {
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .stat-card.neutral { background: #f8fafc; }
+        .stat-card.success { background: #f0fdf4; }
+        .stat-card.error { background: #fef2f2; }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .stat-number.neutral { color: #1e293b; }
+        .stat-number.success { color: #16a34a; }
+        .stat-number.error { color: #dc2626; }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0;
+        }
+        
+        .result-card {
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid;
+            margin-bottom: 12px;
+        }
+        
+        .result-card.success {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+        }
+        
+        .result-card.error {
+            border-color: #fecaca;
+            background: #fef2f2;
+        }
+        
+        .result-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .result-card.success i { color: #22c55e; }
+        .result-card.error i { color: #ef4444; }
+        
+        .result-title {
+            font-weight: 500;
+            margin: 0;
+        }
+        
+        .result-card.success .result-title { color: #166534; }
+        .result-card.error .result-title { color: #991b1b; }
+        
+        .result-details {
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        .result-card.success .result-details { color: #15803d; }
+        .result-card.error .result-details { color: #b91c1c; }
+        
+        .result-details p {
+            margin: 4px 0;
+        }
+        
+        .logs-button {
+            font-size: 14px;
+            color: #475569;
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 0;
+        }
+        
+        .logs-button:hover {
+            color: #1e293b;
+        }
+        
+        .logs-box {
+            margin-top: 8px;
+            padding: 16px;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-size: 12px;
+            border-radius: 8px;
+            overflow: auto;
+            max-height: 256px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            white-space: pre-wrap;
+        }
+        
+        .help-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .help-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+            margin-top: 0;
+        }
+        
+        .help-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .help-item {
+            display: flex;
+            gap: 8px;
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        
+        .help-number {
+            font-weight: bold;
+            color: #4f46e5;
+        }
+        
+        .code-box {
+            margin-top: 16px;
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 16px;
+            overflow: auto;
+        }
+        
+        .code-title {
+            font-size: 12px;
+            color: #94a3b8;
+            margin: 0 0 8px 0;
+        }
+        
+        .code-box pre {
+            margin: 0;
+            font-size: 13px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            color: #f8fafc;
+            line-height: 1.5;
+        }
+        
+        .code-key { color: #0891b2; }
+        .code-num { color: #c026d3; }
+        .code-str { color: #16a34a; }
+        
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #4f46e5;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 8px;
+            text-align: center;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .download-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .download-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            color: #166534;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .download-link:hover {
+            background: #dcfce7;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i data-lucide="folder-archive" style="width: 24px; height: 24px; color: #4f46e5;"></i>
+            </div>
+            <div>
+                <h1 class="header-title">
+                    Harmony Concatenator
+                    <span class="badge">Standalone</span>
+                </h1>
+                <p class="header-subtitle">Combine plate data from Harmony exports - runs entirely in your browser</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Upload Section -->
+        <div class="card">
+            <h2 class="card-title">Upload Files</h2>
+            
+            <div class="upload-grid">
+                <!-- Config Upload -->
+                <div class="upload-zone" id="config-zone">
+                    <input type="file" id="config-input" accept=".yml,.yaml">
+                    <div class="upload-content">
+                        <i data-lucide="file-text" class="upload-icon" style="width: 40px; height: 40px;"></i>
+                        <p class="upload-label">Configuration File</p>
+                        <p class="upload-desc" id="config-desc">Drop config.yml here</p>
+                    </div>
+                </div>
+                
+                <!-- Data ZIP Upload -->
+                <div class="upload-zone" id="data-zone">
+                    <input type="file" id="data-input" accept=".zip">
+                    <div class="upload-content">
+                        <i data-lucide="folder-archive" class="upload-icon" style="width: 40px; height: 40px;"></i>
+                        <p class="upload-label">Plate Data (ZIP)</p>
+                        <p class="upload-desc" id="data-desc">Drop plate folders as .zip</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar (hidden by default) -->
+            <div id="progress-container" class="hidden">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <p class="progress-text" id="progress-text">Processing...</p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="button-group">
+                <button id="process-btn" class="btn-primary" disabled>
+                    <i data-lucide="upload" style="width: 20px; height: 20px;"></i>
+                    Process Data
+                </button>
+                
+                <button id="reset-btn" class="btn-secondary hidden">
+                    <i data-lucide="trash-2" style="width: 20px; height: 20px;"></i>
+                    Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Error Display -->
+        <div id="error-box" class="error-box hidden">
+            <i data-lucide="alert-circle" style="width: 24px; height: 24px;"></i>
+            <div>
+                <h3 class="error-title">Error</h3>
+                <p class="error-text" id="error-text"></p>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="card hidden">
+            <div class="results-header">
+                <h2 class="card-title" style="margin: 0;">Results</h2>
+                <button id="download-all-btn" class="btn-download">
+                    <i data-lucide="download" style="width: 20px; height: 20px;"></i>
+                    Download All (ZIP)
+                </button>
+            </div>
+            
+            <!-- Summary Stats -->
+            <div class="stats-grid">
+                <div class="stat-card neutral">
+                    <p class="stat-number neutral" id="stat-plates">0</p>
+                    <p class="stat-label">Plates Found</p>
+                </div>
+                <div class="stat-card success">
+                    <p class="stat-number success" id="stat-processed">0</p>
+                    <p class="stat-label">Files Processed</p>
+                </div>
+                <div class="stat-card error">
+                    <p class="stat-number error" id="stat-failed">0</p>
+                    <p class="stat-label">Files Failed</p>
+                </div>
+            </div>
+            
+            <!-- Individual Results -->
+            <div id="results-list"></div>
+            
+            <!-- Individual Download Links -->
+            <div id="download-links" class="download-links"></div>
+            
+            <!-- Logs -->
+            <div id="logs-section">
+                <button class="logs-button" id="logs-toggle">
+                    <i data-lucide="info" style="width: 16px; height: 16px;"></i>
+                    <span id="logs-toggle-text">Show processing logs</span>
+                </button>
+                <pre class="logs-box hidden" id="logs-box"></pre>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div id="help-section" class="help-card">
+            <h3 class="help-title">How to use</h3>
+            <ol class="help-list">
+                <li class="help-item">
+                    <span class="help-number">1.</span>
+                    Create a config.yml file defining your plate mappings and file patterns
+                </li>
+                <li class="help-item">
+                    <span class="help-number">2.</span>
+                    ZIP your Harmony export folder containing all plate subfolders
+                </li>
+                <li class="help-item">
+                    <span class="help-number">3.</span>
+                    Upload both files and click "Process Data"
+                </li>
+                <li class="help-item">
+                    <span class="help-number">4.</span>
+                    Download the concatenated CSV files
+                </li>
+            </ol>
+            
+            <div class="code-box">
+                <p class="code-title">Example config.yml:</p>
+                <pre><span class="code-key">plate_format</span>: <span class="code-num">384</span>
+<span class="code-key">plates</span>:
+  <span class="code-str">"32846"</span>: {<span class="code-key">plate_number</span>: <span class="code-num">1</span>, <span class="code-key">replicate</span>: <span class="code-num">1</span>}
+  <span class="code-str">"32847"</span>: {<span class="code-key">plate_number</span>: <span class="code-num">1</span>, <span class="code-key">replicate</span>: <span class="code-num">2</span>}
+  <span class="code-str">"32848"</span>: {<span class="code-key">plate_number</span>: <span class="code-num">1</span>, <span class="code-key">replicate</span>: <span class="code-num">3</span>}
+<span class="code-key">input_files</span>:
+  - <span class="code-str">"PlateResults.txt"</span>
+  - <span class="code-str">"Objects_Population - Nuclei.txt"</span></pre>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        Francis Crick Institute - High Throughput Screening STP
+    </footer>
+
+    <script>
+    // =========================================================================
+    // Harmony Processor - Pure JavaScript Implementation
+    // =========================================================================
+    
+    class HarmonyProcessor {
+        constructor() {
+            this.logs = [];
+            this.outputFiles = new Map(); // filename -> CSV content
+        }
+        
+        log(message) {
+            this.logs.push(message);
+            console.log(message);
+        }
+        
+        // Plate format configurations: {format: [rows, cols, total]}
+        static PLATE_FORMATS = {
+            96: [8, 12, 96],
+            384: [16, 24, 384],
+            1536: [32, 48, 1536]
+        };
+        
+        getRowMapping(plateFormat) {
+            const formats = HarmonyProcessor.PLATE_FORMATS;
+            if (!formats[plateFormat]) {
+                throw new Error(`Unsupported plate format: ${plateFormat}. Supported: ${Object.keys(formats).join(', ')}`);
+            }
+            
+            const maxRows = formats[plateFormat][0];
+            const rowMap = {};
+            
+            for (let i = 1; i <= maxRows; i++) {
+                if (i <= 26) {
+                    rowMap[i] = String.fromCharCode(64 + i); // A-Z
+                } else {
+                    rowMap[i] = 'A' + String.fromCharCode(64 + i - 26); // AA, AB, etc.
+                }
+            }
+            
+            return rowMap;
+        }
+        
+        createWellId(row, col, rowMapping) {
+            const rowLetter = rowMapping[parseInt(row)] || '?';
+            return `${rowLetter}${String(parseInt(col)).padStart(2, '0')}`;
+        }
+        
+        findDataStartRow(content) {
+            // Normalize line endings
+            const lines = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].trim().toLowerCase().startsWith('[data]')) {
+                    return i + 1;
+                }
+            }
+            return 0; // No [Data] marker found
+        }
+        
+        parseTabDelimited(content, skipRows = 0, useHeader = true) {
+            // Normalize line endings
+            const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const lines = normalizedContent.split('\n');
+            const dataLines = lines.slice(skipRows);
+            
+            // Now filter empty lines after slicing
+            const nonEmptyLines = dataLines.filter(line => line.trim());
+            
+            if (nonEmptyLines.length === 0) {
+                return { headers: [], rows: [] };
+            }
+            
+            let headers = [];
+            let startIdx = 0;
+            
+            if (useHeader) {
+                headers = nonEmptyLines[0].split('\t').map(h => h.trim());
+                startIdx = 1;
+            }
+            
+            const rows = [];
+            for (let i = startIdx; i < nonEmptyLines.length; i++) {
+                const values = nonEmptyLines[i].split('\t');
+                if (values.length > 0 && values.some(v => v.trim())) {
+                    rows.push(values);
+                }
+            }
+            
+            return { headers, rows };
+        }
+        
+        validateConfig(config) {
+            const required = ['plate_format', 'plates', 'input_files'];
+            for (const field of required) {
+                if (!(field in config)) {
+                    throw new Error(`Missing required config field: ${field}`);
+                }
+            }
+            
+            if (!HarmonyProcessor.PLATE_FORMATS[config.plate_format]) {
+                throw new Error(`Invalid plate_format. Supported: 96, 384, 1536`);
+            }
+            
+            // Ensure plate barcodes are strings
+            const plates = {};
+            for (const [k, v] of Object.entries(config.plates)) {
+                plates[String(k)] = v;
+            }
+            config.plates = plates;
+            
+            return config;
+        }
+        
+        shouldSkipFolder(name) {
+            return name.startsWith('.') || name.startsWith('__');
+        }
+        
+        isPlateFolder(name) {
+            return name.includes('__');
+        }
+        
+        extractBarcode(folderName) {
+            return folderName.split('__')[0];
+        }
+        
+        async processZip(zipFile, configContent, progressCallback) {
+            this.logs = [];
+            this.outputFiles.clear();
+            
+            // Parse config
+            this.log('Loading configuration...');
+            let config;
+            try {
+                config = jsyaml.load(configContent);
+                config = this.validateConfig(config);
+            } catch (e) {
+                throw new Error(`Config error: ${e.message}`);
+            }
+            
+            this.log(`  Plate format: ${config.plate_format}-well`);
+            this.log(`  Plates defined: ${Object.keys(config.plates).length}`);
+            this.log(`  Files to process: ${config.input_files.join(', ')}`);
+            
+            // Load ZIP
+            progressCallback(5, 'Loading ZIP file...');
+            const zip = await JSZip.loadAsync(zipFile);
+            
+            // Build folder structure from ZIP
+            this.log('\nScanning ZIP contents...');
+            const folderMapping = new Map(); // folderPath -> barcode
+            const zipStructure = new Map(); // path -> content
+            
+            // Find all files and their paths
+            const allPaths = Object.keys(zip.files);
+            
+            // Find the root - could be a single folder or direct contents
+            let rootPrefix = '';
+            const topLevelItems = new Set();
+            for (const path of allPaths) {
+                const parts = path.split('/').filter(p => p);
+                if (parts.length > 0) {
+                    topLevelItems.add(parts[0]);
+                }
+            }
+            
+            // If there's only one top-level item and it's a folder, use it as root
+            if (topLevelItems.size === 1) {
+                const singleItem = [...topLevelItems][0];
+                const isFolder = allPaths.some(p => p.startsWith(singleItem + '/'));
+                if (isFolder) {
+                    rootPrefix = singleItem + '/';
+                    this.log(`  Found root folder: ${singleItem}`);
+                }
+            }
+            
+            // Find plate folders
+            const plateFolders = new Set();
+            for (const path of allPaths) {
+                let relativePath = path;
+                if (rootPrefix && path.startsWith(rootPrefix)) {
+                    relativePath = path.substring(rootPrefix.length);
+                }
+                
+                const parts = relativePath.split('/').filter(p => p);
+                if (parts.length > 0) {
+                    const folderName = parts[0];
+                    if (this.isPlateFolder(folderName) && !this.shouldSkipFolder(folderName)) {
+                        plateFolders.add(folderName);
+                    }
+                }
+            }
+            
+            // Build folder mapping
+            for (const folder of plateFolders) {
+                const barcode = this.extractBarcode(folder);
+                folderMapping.set(folder, barcode);
+                
+                if (!(barcode in config.plates)) {
+                    this.log(`  Warning: Barcode ${barcode} from folder ${folder} not defined in config`);
+                }
+            }
+            
+            this.log(`\nFound ${folderMapping.size} plate folders`);
+            
+            if (folderMapping.size === 0) {
+                throw new Error('No valid plate folders found in ZIP. Folders should contain "__" (e.g., "32846__2024-01-01T...")');
+            }
+            
+            // Process each file type
+            const results = [];
+            const totalFiles = config.input_files.length;
+            
+            for (let fileIdx = 0; fileIdx < config.input_files.length; fileIdx++) {
+                const filePattern = config.input_files[fileIdx];
+                const baseProgress = 10 + (fileIdx / totalFiles) * 80;
+                progressCallback(baseProgress, `Processing ${filePattern}...`);
+                
+                const result = await this.processFileType(
+                    zip, 
+                    rootPrefix, 
+                    filePattern, 
+                    config, 
+                    folderMapping,
+                    (p, m) => progressCallback(baseProgress + p * (80 / totalFiles) / 100, m)
+                );
+                results.push(result);
+            }
+            
+            progressCallback(95, 'Finalizing...');
+            
+            const successful = results.filter(r => r.success).length;
+            
+            return {
+                files_processed: successful,
+                files_failed: results.length - successful,
+                plates_found: folderMapping.size,
+                results: results,
+                logs: this.logs
+            };
+        }
+        
+        async processFileType(zip, rootPrefix, filePattern, config, folderMapping, progressCallback) {
+            this.log(`\nProcessing: ${filePattern}`);
+            
+            const plateFormat = config.plate_format;
+            const platesConfig = config.plates;
+            const rowMapping = this.getRowMapping(plateFormat);
+            const expectedWells = HarmonyProcessor.PLATE_FORMATS[plateFormat][2];
+            
+            const allData = [];
+            let columnNames = null;
+            let filesProcessed = 0;
+            let filesSkipped = 0;
+            
+            const sortedFolders = [...folderMapping.keys()].sort();
+            const totalFolders = sortedFolders.length;
+            
+            for (let i = 0; i < sortedFolders.length; i++) {
+                const folderName = sortedFolders[i];
+                const plateBarcode = folderMapping.get(folderName);
+                
+                progressCallback((i / totalFolders) * 100, `Processing ${folderName}...`);
+                
+                // Find Evaluation folder
+                const folderPrefix = rootPrefix + folderName + '/';
+                const evalFolders = [];
+                
+                for (const path of Object.keys(zip.files)) {
+                    if (path.startsWith(folderPrefix)) {
+                        const relative = path.substring(folderPrefix.length);
+                        const parts = relative.split('/');
+                        if (parts[0].startsWith('Evaluation')) {
+                            evalFolders.push(parts[0]);
+                        }
+                    }
+                }
+                
+                const uniqueEvalFolders = [...new Set(evalFolders)].sort();
+                
+                if (uniqueEvalFolders.length === 0) {
+                    this.log(`  No Evaluation folders found in ${folderName}`);
+                    continue;
+                }
+                
+                const evalFolder = uniqueEvalFolders[0];
+                const targetPath = folderPrefix + evalFolder + '/' + filePattern;
+                
+                const file = zip.file(targetPath);
+                if (!file) {
+                    filesSkipped++;
+                    continue;
+                }
+                
+                this.log(`  Processing: ${folderName}/${evalFolder}/${filePattern}`);
+                
+                try {
+                    const content = await file.async('string');
+                    const dataStart = this.findDataStartRow(content);
+                    const isFirst = columnNames === null;
+                    
+                    let parsed;
+                    if (isFirst) {
+                        parsed = this.parseTabDelimited(content, dataStart, true);
+                        columnNames = parsed.headers;
+                        this.log(`    First file - found ${columnNames.length} column headers`);
+                        if (columnNames.length > 0) {
+                            this.log(`    First few columns: ${columnNames.slice(0, 5).join(', ')}...`);
+                        }
+                    } else {
+                        parsed = this.parseTabDelimited(content, dataStart + 1, false);
+                        // Handle column count mismatch
+                        if (parsed.rows.length > 0 && parsed.rows[0].length !== columnNames.length) {
+                            this.log(`    Warning: Column count mismatch. Expected ${columnNames.length}, got ${parsed.rows[0].length}`);
+                        }
+                    }
+                    
+                    // Get plate info
+                    const plateInfo = platesConfig[plateBarcode] || {};
+                    const plateNumber = plateInfo.plate_number || 0;
+                    const replicate = plateInfo.replicate || 0;
+                    
+                    if (!(plateBarcode in platesConfig)) {
+                        this.log(`    Warning: Barcode ${plateBarcode} not in config, using defaults`);
+                    }
+                    
+                    // Add metadata to each row
+                    const rowIdx = columnNames.indexOf('Row');
+                    const colIdx = columnNames.indexOf('Column');
+                    
+                    for (const row of parsed.rows) {
+                        // Ensure row has enough columns
+                        while (row.length < columnNames.length) {
+                            row.push('');
+                        }
+                        
+                        // Create well ID if Row and Column exist
+                        let wellId = '';
+                        if (rowIdx !== -1 && colIdx !== -1) {
+                            wellId = this.createWellId(row[rowIdx], row[colIdx], rowMapping);
+                        }
+                        
+                        // Add metadata at start
+                        const enhancedRow = {
+                            Plate_ID: plateBarcode,
+                            Plate_number: plateNumber,
+                            Replicate: replicate,
+                            Well_ID: wellId,
+                            data: row
+                        };
+                        
+                        allData.push(enhancedRow);
+                    }
+                    
+                    this.log(`    Shape: ${parsed.rows.length} rows x ${columnNames.length} columns`);
+                    
+                    if (parsed.rows.length < expectedWells) {
+                        this.log(`    Note: Partial plate (${parsed.rows.length}/${expectedWells} wells)`);
+                    }
+                    
+                    filesProcessed++;
+                    
+                } catch (e) {
+                    this.log(`    Error reading file: ${e.message}`);
+                    filesSkipped++;
+                }
+            }
+            
+            if (allData.length === 0) {
+                this.log(`\nNo data found for ${filePattern}`);
+                return {
+                    success: false,
+                    file: filePattern,
+                    reason: 'No data found'
+                };
+            }
+            
+            this.log(`\nConcatenating ${filesProcessed} files...`);
+            
+            // Sort data
+            allData.sort((a, b) => {
+                if (a.Plate_number !== b.Plate_number) return a.Plate_number - b.Plate_number;
+                if (a.Replicate !== b.Replicate) return a.Replicate - b.Replicate;
+                return (a.Well_ID || '').localeCompare(b.Well_ID || '');
+            });
+            
+            // Filter out unnamed columns from original headers
+            const cleanColumnNames = columnNames.filter(c => !String(c).startsWith('Unnamed'));
+            
+            // Check if Row and Column exist
+            const rowIdx = cleanColumnNames.indexOf('Row');
+            const colIdx = cleanColumnNames.indexOf('Column');
+            const hasRowCol = rowIdx !== -1 && colIdx !== -1;
+            
+            // Build final headers: Plate_ID, Plate_number, Replicate, then original columns with Well_ID inserted after Column
+            let outputHeaders = ['Plate_ID', 'Plate_number', 'Replicate'];
+            
+            // Create mapping from clean column name to its index in original data
+            const colNameToOrigIdx = {};
+            for (let i = 0; i < columnNames.length; i++) {
+                colNameToOrigIdx[columnNames[i]] = i;
+            }
+            
+            if (hasRowCol) {
+                // Insert Well_ID after Column
+                const columnIdx = cleanColumnNames.indexOf('Column');
+                for (let i = 0; i < cleanColumnNames.length; i++) {
+                    outputHeaders.push(cleanColumnNames[i]);
+                    if (i === columnIdx) {
+                        outputHeaders.push('Well_ID');
+                    }
+                }
+            } else {
+                outputHeaders = outputHeaders.concat(cleanColumnNames);
+            }
+            
+            this.log(`  Output columns: ${outputHeaders.length}`);
+            
+            // Build CSV content
+            let csv = outputHeaders.join(',') + '\n';
+            
+            for (const row of allData) {
+                const values = [
+                    this.escapeCSV(row.Plate_ID),
+                    row.Plate_number,
+                    row.Replicate
+                ];
+                
+                // Add data columns in same order as outputHeaders (after first 3)
+                for (let i = 3; i < outputHeaders.length; i++) {
+                    const colName = outputHeaders[i];
+                    
+                    if (colName === 'Well_ID') {
+                        values.push(this.escapeCSV(row.Well_ID || ''));
+                    } else {
+                        // Look up the original column index
+                        const origIdx = colNameToOrigIdx[colName];
+                        if (origIdx !== undefined && row.data[origIdx] !== undefined) {
+                            values.push(this.escapeCSV(row.data[origIdx]));
+                        } else {
+                            values.push('');
+                        }
+                    }
+                }
+                
+                csv += values.join(',') + '\n';
+            }
+            
+            // Store output file
+            const stem = filePattern.replace(/\.[^.]+$/, '');
+            const outputFilename = `concatenated_${stem}.csv`;
+            this.outputFiles.set(outputFilename, csv);
+            
+            this.log(`\nSaved: ${outputFilename}`);
+            
+            return {
+                success: true,
+                file: filePattern,
+                output: outputFilename,
+                rows: allData.length,
+                columns: outputHeaders.length,
+                plates_processed: filesProcessed,
+                plates_skipped: filesSkipped
+            };
+        }
+        
+        escapeCSV(value) {
+            if (value === null || value === undefined) return '';
+            const str = String(value).trim();
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        }
+        
+        async createOutputZip() {
+            const zip = new JSZip();
+            for (const [filename, content] of this.outputFiles) {
+                zip.file(filename, content);
+            }
+            return await zip.generateAsync({ type: 'blob' });
+        }
+    }
+    
+    // =========================================================================
+    // UI Controller
+    // =========================================================================
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // State
+        let configFile = null;
+        let dataZip = null;
+        let processor = null;
+        let result = null;
+        
+        // Elements
+        const configZone = document.getElementById('config-zone');
+        const configInput = document.getElementById('config-input');
+        const configDesc = document.getElementById('config-desc');
+        const dataZone = document.getElementById('data-zone');
+        const dataInput = document.getElementById('data-input');
+        const dataDesc = document.getElementById('data-desc');
+        const processBtn = document.getElementById('process-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const progressContainer = document.getElementById('progress-container');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const errorBox = document.getElementById('error-box');
+        const errorText = document.getElementById('error-text');
+        const resultsSection = document.getElementById('results-section');
+        const helpSection = document.getElementById('help-section');
+        const downloadAllBtn = document.getElementById('download-all-btn');
+        const logsToggle = document.getElementById('logs-toggle');
+        const logsToggleText = document.getElementById('logs-toggle-text');
+        const logsBox = document.getElementById('logs-box');
+        
+        // Format file size
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        // Update UI state
+        function updateUI() {
+            const canProcess = configFile && dataZip;
+            processBtn.disabled = !canProcess;
+            resetBtn.classList.toggle('hidden', !configFile && !dataZip && !result);
+        }
+        
+        // Handle config file selection
+        function handleConfigFile(file) {
+            if (!file) return;
+            configFile = file;
+            configZone.classList.add('has-file');
+            configDesc.innerHTML = `<span class="file-name">${file.name}</span><br><span class="file-size">${formatSize(file.size)}</span>`;
+            configZone.querySelector('.upload-icon').classList.add('success');
+            updateUI();
+        }
+        
+        // Handle data file selection
+        function handleDataFile(file) {
+            if (!file) return;
+            dataZip = file;
+            dataZone.classList.add('has-file');
+            dataDesc.innerHTML = `<span class="file-name">${file.name}</span><br><span class="file-size">${formatSize(file.size)}</span>`;
+            dataZone.querySelector('.upload-icon').classList.add('success');
+            updateUI();
+        }
+        
+        // File input handlers
+        configInput.addEventListener('change', (e) => handleConfigFile(e.target.files[0]));
+        dataInput.addEventListener('change', (e) => handleDataFile(e.target.files[0]));
+        
+        // Drag and drop handlers
+        [configZone, dataZone].forEach((zone, idx) => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragging');
+            });
+            
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('dragging');
+            });
+            
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragging');
+                const file = e.dataTransfer.files[0];
+                if (idx === 0) handleConfigFile(file);
+                else handleDataFile(file);
+            });
+        });
+        
+        // Show error
+        function showError(message) {
+            errorText.textContent = message;
+            errorBox.classList.remove('hidden');
+        }
+        
+        // Hide error
+        function hideError() {
+            errorBox.classList.add('hidden');
+        }
+        
+        // Update progress
+        function updateProgress(percent, message) {
+            progressFill.style.width = percent + '%';
+            progressText.textContent = message;
+        }
+        
+        // Process button click
+        processBtn.addEventListener('click', async () => {
+            if (!configFile || !dataZip) return;
+            
+            hideError();
+            resultsSection.classList.add('hidden');
+            progressContainer.classList.remove('hidden');
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width: 20px; height: 20px;"></i> Processing...';
+            lucide.createIcons();
+            
+            try {
+                // Read config file
+                updateProgress(0, 'Reading configuration...');
+                const configContent = await configFile.text();
+                
+                // Process
+                processor = new HarmonyProcessor();
+                result = await processor.processZip(dataZip, configContent, updateProgress);
+                
+                updateProgress(100, 'Complete!');
+                
+                // Show results
+                displayResults(result);
+                
+            } catch (e) {
+                showError(e.message);
+                console.error(e);
+            } finally {
+                progressContainer.classList.add('hidden');
+                processBtn.disabled = false;
+                processBtn.innerHTML = '<i data-lucide="upload" style="width: 20px; height: 20px;"></i> Process Data';
+                lucide.createIcons();
+                updateUI();
+            }
+        });
+        
+        // Display results
+        function displayResults(result) {
+            resultsSection.classList.remove('hidden');
+            helpSection.classList.add('hidden');
+            
+            // Stats
+            document.getElementById('stat-plates').textContent = result.plates_found;
+            document.getElementById('stat-processed').textContent = result.files_processed;
+            document.getElementById('stat-failed').textContent = result.files_failed;
+            
+            // Results list
+            const resultsList = document.getElementById('results-list');
+            resultsList.innerHTML = '';
+            
+            for (const r of result.results) {
+                const isSuccess = r.success;
+                const card = document.createElement('div');
+                card.className = `result-card ${isSuccess ? 'success' : 'error'}`;
+                
+                card.innerHTML = `
+                    <div class="result-content">
+                        <i data-lucide="${isSuccess ? 'check-circle' : 'x-circle'}" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                        <div style="flex: 1;">
+                            <p class="result-title">${r.file}</p>
+                            ${isSuccess ? `
+                                <div class="result-details">
+                                    <p>Output: ${r.output}</p>
+                                    <p>${r.rows.toLocaleString()} rows × ${r.columns} columns</p>
+                                    <p>${r.plates_processed} plates processed, ${r.plates_skipped} skipped</p>
+                                </div>
+                            ` : `
+                                <p class="result-details">${r.reason}</p>
+                            `}
+                        </div>
+                    </div>
+                `;
+                
+                resultsList.appendChild(card);
+            }
+            
+            // Download links
+            const downloadLinks = document.getElementById('download-links');
+            downloadLinks.innerHTML = '';
+            
+            for (const [filename, content] of processor.outputFiles) {
+                const blob = new Blob([content], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.className = 'download-link';
+                link.innerHTML = `<i data-lucide="file-down" style="width: 16px; height: 16px;"></i> ${filename}`;
+                downloadLinks.appendChild(link);
+            }
+            
+            // Logs
+            logsBox.textContent = result.logs.join('\n');
+            logsToggleText.textContent = `Show processing logs (${result.logs.length} lines)`;
+            
+            lucide.createIcons();
+        }
+        
+        // Download all button
+        downloadAllBtn.addEventListener('click', async () => {
+            if (!processor) return;
+            
+            const zipBlob = await processor.createOutputZip();
+            const url = URL.createObjectURL(zipBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'harmony_concatenated_results.zip';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            URL.revokeObjectURL(url);
+        });
+        
+        // Logs toggle
+        let logsExpanded = false;
+        logsToggle.addEventListener('click', () => {
+            logsExpanded = !logsExpanded;
+            logsBox.classList.toggle('hidden', !logsExpanded);
+            logsToggleText.textContent = (logsExpanded ? 'Hide' : 'Show') + ` processing logs (${result?.logs?.length || 0} lines)`;
+        });
+        
+        // Reset button
+        resetBtn.addEventListener('click', () => {
+            configFile = null;
+            dataZip = null;
+            processor = null;
+            result = null;
+            
+            configZone.classList.remove('has-file');
+            configDesc.textContent = 'Drop config.yml here';
+            configZone.querySelector('.upload-icon').classList.remove('success');
+            configInput.value = '';
+            
+            dataZone.classList.remove('has-file');
+            dataDesc.textContent = 'Drop plate folders as .zip';
+            dataZone.querySelector('.upload-icon').classList.remove('success');
+            dataInput.value = '';
+            
+            hideError();
+            resultsSection.classList.add('hidden');
+            helpSection.classList.remove('hidden');
+            logsExpanded = false;
+            logsBox.classList.add('hidden');
+            
+            updateUI();
+        });
+    });
+    </script>
+</body>
+</html>
