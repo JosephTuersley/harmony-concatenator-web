@@ -33,7 +33,7 @@ A web interface for concatenating Harmony high-content imaging data. Upload your
 ### Quick Start
 
 **Option A: Use online** (no download needed)
-- Go to [harmony-concatenator.html](https://josephtuersley.github.io/harmony-concatenator-web/standalone/harmony-concatenator.html)
+- Go to [harmony-concatenator.html](https://josephtuersley.github.io/harmony-concatenator-web/standalone/harmony-concatenator-V2.html)
 
 **Option B: Download for offline use**
 1. Download `standalone/harmony-concatenator-V2.html`
